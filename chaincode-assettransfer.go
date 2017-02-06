@@ -197,11 +197,11 @@ func (t *SimpleChaincode) Invoke(stub shim.ChaincodeStubInterface, function stri
 
 	// Handle different functions
 	if function == "init" {				//Used for manual reset
-		t.Init(stub, "init", args)
+		return t.Init(stub, "init", args)
 	} else if function == "join" {			//Used when a new client wishes to join the network
-		t.join(stub, args)
+		return t.join(stub, args)
 	} else if function == "transfer" {		//Used for Asset Transfers
-		t.transfer(stub, args)
+		return t.transfer(stub, args)
 	}
 
 	fmt.Println("Invoke() did not find function: " + function)					//Log error message
@@ -217,7 +217,7 @@ func (t *SimpleChaincode) Query(stub shim.ChaincodeStubInterface, function strin
 		if len(args) != 1 {				//Validate the number of arguments
 			return nil, errors.New("Incorrect number of arguments to Query() - expecting 1.")
 		}
-		valAsBytes, err := stub.GetState(args[0])	//Read most current name from World State
+		valAsBytes, err := stub.GetState(args[0])	//Get Asset Balance for specified user
 		if err != nil {
 			return nil, errors.New("Failed to get Asset Balance for User ID '" + args[0] + "'. Details: " + err.Error())
 		}
