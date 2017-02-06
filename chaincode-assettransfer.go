@@ -38,7 +38,7 @@ func (t *SimpleChaincode) join(stub shim.ChaincodeStubInterface, args []string) 
 	
 	// Validate the User ID of the joinee
 	joineeId := args[0]
-	if strings.Index(joineeId, "_") != -1 {		//Do not accept User IDs beginning with an underscore
+	if strings.Index(joineeId, "_") == 0 {		//Do not accept User IDs beginning with an underscore
 		return nil, errors.New("User ID of new joinee must not begin with an underscore.")
 	}
 	
