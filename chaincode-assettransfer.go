@@ -68,10 +68,12 @@ func (t *SimpleChaincode) join(stub shim.ChaincodeStubInterface, args []string) 
 	// Add Asset Balance entry to the Blockchain for the joinee User ID (everyone starts with a 100 units)
 	err = stub.PutState(joineeId, []byte(initialAssetBalance))
 	if err != nil {
-		return nil, errors.New("Unable to initialize Asset Balance entry for the joinee User ID. Rolling back addition of User...")
+		errMsg := "Unable to initialize Asset Balance entry for the joinee User ID '" + joineeId + "'. Error details: " + err.Error() + "\r\n\r\nRolling back addition of new User to Joinee Index..."
 		err = stub.PutState(joineeId, joinedUsersAsBytes)
-		if err != nil {
-			return nil, errors.New("FATAL ERROR: UNABLE TO AUTOMATICALLY ROLLBACK ADDITION OF NEW USER ID. A SYSTEM ADMINISTRATOR WILL HAVE TO PERFORM THE ROLLBACK MANUALLY TO CORRECT DATABASE. Correct value: " + fmt.Sprint(joinedUsersIndex))
+		if err == nil {
+			return nil, errors.New(errMsg + " successfully rolled back addition of new User ID '" + joineeId + "'.")
+		} else {
+			return nil, errors.New(errMsg + " FATAL ERROR: UNABLE TO AUTOMATICALLY ROLLBACK ADDITION OF NEW USER ID '" + joineeId + "'. A SYSTEM ADMINISTRATOR WILL HAVE TO PERFORM THE ROLLBACK MANUALLY TO CORRECT DATABASE. Correct contents of index: " + fmt.Sprint(joinedUsersIndex)  + "\r\n\r\nError details: " + err.Error())
 		}
 	}
 	
@@ -95,7 +97,7 @@ func (t *SimpleChaincode) transfer(stub shim.ChaincodeStubInterface, args []stri
 	}
 	
 	// Validate User IDs
-	if strings.Index(senderId, "_") == 1 || strings.Index(receiverId, "_") == 1 {
+	if strings.Index(senderId, "_") == 0 || strings.Index(receiverId, "_") == 0 {
 		return nil, errors.New("User IDs of Sender and Receiver must not begin with an underscore.")
 	}
 	if senderId == receiverId {
@@ -156,11 +158,12 @@ func (t *SimpleChaincode) transfer(stub shim.ChaincodeStubInterface, args []stri
 	}
 	err = stub.PutState(receiverId, []byte(strconv.Itoa(newReceiverAssetBalance)))
 	if err != nil {
-		return nil, errors.New("Transaction failed - unable to update Asset Balance for Receiver ID '" + receiverId +"' . Error details: " + err.Error())
-		fmt.Println("Attempting to roll back deduction from Sender account...")
+		errMsg := "Transaction failed - unable to update Asset Balance for Receiver ID '" + receiverId +"' . Error details: " + err.Error() + "\r\n\r\nAttempting to roll back deduction from Sender account... "
 		err := stub.PutState(senderId, []byte(strconv.Itoa(senderAssetBalance)))	//Rollback deduction from sender account
-		if err != nil {		//Rollback failure
-			return nil, errors.New("CRITICAL ERROR: UNABLE TO ROLLBACK ASSET DEDUCTION OF '" + string(assetQuantity) + "' FROM SENDER ID '" + senderId +"' . TRANSACTION MUST BE MANUALLY REVERSED! Error details: " + err.Error())
+		if err == nil {		//Rollback successful
+			return nil, errors.New(errMsg + "successfully rolled back asset deduction of '" + string(assetQuantity) + "' from Sender ID '" + senderId +"'.")
+		} else {			//Rollback failed
+			return nil, errors.New(errMsg + "CRITICAL ERROR: UNABLE TO ROLLBACK ASSET DEDUCTION OF '" + string(assetQuantity) + "' FROM SENDER ID '" + senderId +"' . TRANSACTION MUST BE MANUALLY REVERSED! Correct value: " + strconv.Itoa(senderAssetBalance) + "\r\nError details: " + err.Error())
 		}
 	}
 	
