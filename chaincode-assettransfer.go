@@ -66,7 +66,7 @@ func (t *SimpleChaincode) getUserDetails(stub shim.ChaincodeStubInterface, userI
 // Functionality for a new User to join the network. Expects precisely one argument - the unique ID of the joinee
 func (t *SimpleChaincode) join(stub shim.ChaincodeStubInterface, userId string, userRole string, args []string) ([]byte, error) {
 	const errorHeader = "ERROR: Source: join. "
-	if len(args) != 4 {				//Ensure that exactky four arguments have been passed in
+	if len(args) != 2 {				//Ensure that only the expected number of arguments were passed in
 		panic(errorHeader + "Incorrect number of arguments - expecting 2 (Joinee User ID, Joinee User Role).")
 	}
 	
